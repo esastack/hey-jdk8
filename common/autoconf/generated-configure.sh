@@ -689,6 +689,7 @@ MACOSX_VERSION_MIN
 FDLIBM_CFLAGS
 NO_LIFETIME_DSE_CFLAG
 NO_DELETE_NULL_POINTER_CHECKS_CFLAG
+LEGACY_EXTRA_ASFLAGS
 LEGACY_EXTRA_LDFLAGS
 LEGACY_EXTRA_CXXFLAGS
 LEGACY_EXTRA_CFLAGS
@@ -1085,6 +1086,7 @@ with_jtreg
 with_extra_cflags
 with_extra_cxxflags
 with_extra_ldflags
+with_extra_asflags
 enable_debug_symbols
 enable_zip_debug_info
 with_native_debug_symbols
@@ -1947,6 +1949,7 @@ Optional Packages:
   --with-extra-cflags     extra flags to be used when compiling jdk c-files
   --with-extra-cxxflags   extra flags to be used when compiling jdk c++-files
   --with-extra-ldflags    extra flags to be used when linking jdk
+  --with-extra-asflags    extra flags to be passed to the assembler
   --with-native-debug-symbols
                           set the native debug symbol configuration (none,
                           internal, external, zipped) [varying]
@@ -3647,7 +3650,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 #
-# Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -4376,7 +4379,7 @@ VS_SDK_PLATFORM_NAME_2017=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1573120713
+DATE_WHEN_GENERATED=1585090987
 
 ###############################################################################
 #
@@ -41235,6 +41238,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
 
   if test "x$TOOLCHAIN_TYPE" = xgcc; then
     PICFLAG="-fPIC"
+    PIEFLAG="-fPIE"
     C_FLAG_REORDER=''
     CXX_FLAG_REORDER=''
 
@@ -41255,6 +41259,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
     fi
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     PICFLAG="-KPIC"
+    PIEFLAG=""
     C_FLAG_REORDER='-xF'
     CXX_FLAG_REORDER='-xF'
     SHARED_LIBRARY_FLAGS="-G"
@@ -41264,6 +41269,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
     SET_SHARED_LIBRARY_MAPFILE='-M$1'
   elif test "x$TOOLCHAIN_TYPE" = xxlc; then
     PICFLAG="-qpic=large"
+    PIEFLAG=""
     C_FLAG_REORDER=''
     CXX_FLAG_REORDER=''
     SHARED_LIBRARY_FLAGS="-qmkshrobj"
@@ -41273,6 +41279,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
     SET_SHARED_LIBRARY_MAPFILE=''
   elif test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
     PICFLAG=""
+    PIEFLAG=""
     C_FLAG_REORDER=''
     CXX_FLAG_REORDER=''
     SHARED_LIBRARY_FLAGS="-LD"
@@ -41499,6 +41506,12 @@ $as_echo "$as_me: WARNING: Ignoring LDFLAGS($LDFLAGS) found in environment. Use 
   fi
 
 
+  if test "x$ASFLAGS" != "x"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Ignoring ASFLAGS($ASFLAGS) found in environment. Use --with-extra-asflags" >&5
+$as_echo "$as_me: WARNING: Ignoring ASFLAGS($ASFLAGS) found in environment. Use --with-extra-asflags" >&2;}
+  fi
+
+
 # Check whether --with-extra-cflags was given.
 if test "${with_extra_cflags+set}" = set; then :
   withval=$with_extra_cflags;
@@ -41519,6 +41532,13 @@ if test "${with_extra_ldflags+set}" = set; then :
 fi
 
 
+
+# Check whether --with-extra-asflags was given.
+if test "${with_extra_asflags+set}" = set; then :
+  withval=$with_extra_asflags;
+fi
+
+
   CFLAGS_JDK="${CFLAGS_JDK} $with_extra_cflags"
   CXXFLAGS_JDK="${CXXFLAGS_JDK} $with_extra_cxxflags"
   LDFLAGS_JDK="${LDFLAGS_JDK} $with_extra_ldflags"
@@ -41527,6 +41547,8 @@ fi
   LEGACY_EXTRA_CFLAGS="$LEGACY_EXTRA_CFLAGS $with_extra_cflags"
   LEGACY_EXTRA_CXXFLAGS="$LEGACY_EXTRA_CXXFLAGS $with_extra_cxxflags"
   LEGACY_EXTRA_LDFLAGS="$LEGACY_EXTRA_LDFLAGS $with_extra_ldflags"
+  LEGACY_EXTRA_ASFLAGS="$with_extra_asflags"
+
 
 
 
@@ -42072,8 +42094,8 @@ $as_echo "$supports" >&6; }
   CXXFLAGS_JDKLIB="$CCXXFLAGS_JDK $CXXFLAGS_JDK $PICFLAG $CXXFLAGS_JDKLIB_EXTRA "
 
   # Executable flags
-  CFLAGS_JDKEXE="$CCXXFLAGS_JDK $CFLAGS_JDK"
-  CXXFLAGS_JDKEXE="$CCXXFLAGS_JDK $CXXFLAGS_JDK"
+  CFLAGS_JDKEXE="$CCXXFLAGS_JDK $CFLAGS_JDK $PIEFLAG"
+  CXXFLAGS_JDKEXE="$CCXXFLAGS_JDK $CXXFLAGS_JDK $PIEFLAG"
 
 
 
@@ -42155,6 +42177,14 @@ $as_echo "$supports" >&6; }
     LDFLAGS_JDKEXE="${LDFLAGS_JDK}"
     if test "x$OPENJDK_TARGET_OS" = xlinux; then
       LDFLAGS_JDKEXE="$LDFLAGS_JDKEXE -Xlinker --allow-shlib-undefined"
+    fi
+
+    if test "x$TOOLCHAIN_TYPE" = xgcc; then
+      # Enabling pie on 32 bit builds prevents the JVM from allocating a continuous
+      # java heap.
+      if test "x$OPENJDK_TARGET_CPU_BITS" != "x32"; then
+        LDFLAGS_JDKEXE="$LDFLAGS_JDKEXE -pie"
+      fi
     fi
   fi
 
@@ -51600,7 +51630,7 @@ fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for UCRT DLL dir" >&5
 $as_echo_n "checking for UCRT DLL dir... " >&6; }
     if test "x$with_ucrt_dll_dir" != x; then
-      if test -z "$(ls -d "$with_ucrt_dll_dir/*.dll" 2> /dev/null)"; then
+      if test -z "$(ls -d "$with_ucrt_dll_dir/"*.dll 2> /dev/null)"; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
         as_fn_error $? "Could not find any dlls in $with_ucrt_dll_dir" "$LINENO" 5
@@ -51978,8 +52008,11 @@ $as_echo_n "checking for number of cores... " >&6; }
     NUM_CORES=`/usr/sbin/system_profiler -detailLevel full SPHardwareDataType | grep 'Cores' | awk  '{print $5}'`
     FOUND_CORES=yes
   elif test "x$OPENJDK_BUILD_OS" = xaix ; then
-    NUM_CORES=`/usr/sbin/prtconf | grep "^Number Of Processors" | awk '{ print $4 }'`
-    FOUND_CORES=yes
+    NUM_LCPU=`lparstat -m 2> /dev/null | $GREP -o "lcpu=[0-9]*" | $CUT -d "=" -f 2`
+    if test -n "$NUM_LCPU"; then
+      NUM_CORES=$NUM_LCPU
+      FOUND_CORES=yes
+    fi
   elif test -n "$NUMBER_OF_PROCESSORS"; then
     # On windows, look in the env
     NUM_CORES=$NUMBER_OF_PROCESSORS

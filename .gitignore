@@ -1,0 +1,17 @@
+^build/
+^dist/
+nbproject/private/
+common/nb_native/nbproject/
+.idea/
+build/
+corba/
+hotspot/
+jaxp/
+jaxws/
+jdk/
+langtools/
+nashorn/
+^webrev
+^.hgtip
+^.bridge2
+.DS_Store
